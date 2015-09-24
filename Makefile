@@ -17,20 +17,29 @@
 #      (at your option) any later version.
 #
 #******************************************************************************
-OS = $(shell uname -s)
-ifneq (,$(findstring MINGW,$(OS)))
-RES  = obj/pngpal2raw_stdres.res
-EXEEXT = .exe
+ifneq (,$(findstring Windows,$(OS)))
+  RES  = obj/pngpal2raw_stdres.res
+  EXEEXT = .exe
+  PKGFMT = zip
+  PKGOS = win
 else
-RES  = 
-EXEEXT =
+  RES  = 
+  EXEEXT =
+  PKGFMT = tar.gz
+  PKGOS = lin
 endif
+
 CPP  = g++
 CC   = gcc
 WINDRES = windres
 DLLTOOL = dlltool
 RM = rm -f
+MV = mv -f
+CP = cp -f
 MKDIR = mkdir -p
+ECHO = @echo
+TAR = tar
+ZIP = zip
 
 BIN  = bin/pngpal2raw$(EXEEXT)
 LIBS =
@@ -39,6 +48,7 @@ obj/imagedata.o \
 obj/pngpal2raw.o \
 $(RES)
 
+GENSRC   = obj/ver_defs.h
 LINKOBJ  = $(OBJS)
 LINKLIB = -static -lpng -lz -lm
 INCS = 
@@ -56,9 +66,12 @@ WARNFLAGS = -Wall -Wno-sign-compare -Wno-unused-parameter
 CXXFLAGS = $(CXXINCS) -std=c++11 -c -fmessage-length=0 $(WARNFLAGS) $(DEPFLAGS) $(OPTFLAGS)
 CFLAGS = $(INCS) -c -fmessage-length=0 $(WARNFLAGS) $(DEPFLAGS) $(OPTFLAGS)
 LDFLAGS = $(LINKLIB) $(OPTFLAGS) $(DBGFLAGS) $(LINKFLAGS)
-RM = rm -f
 
-.PHONY: all all-before all-after clean clean-custom
+# load program version
+include version.mk
+VER_STRING = $(VER_MAJOR).$(VER_MINOR).$(VER_RELEASE).$(VER_BUILD)
+
+.PHONY: all all-before all-after clean clean-custom package pkg-before zip tar.gz
 
 all: all-before $(BIN) all-after
 
@@ -66,30 +79,67 @@ all-before:
 	$(MKDIR) obj bin
 
 clean: clean-custom
-	-${RM} $(OBJS) $(BIN) $(LIBS)
-	-@echo ' '
+	-${RM} $(OBJS) $(GENSRC) $(BIN) $(LIBS)
+	-${RM} pkg/*
+	-$(ECHO) ' '
 
 $(BIN): $(OBJS) $(LIBS)
-	@echo 'Building target: $@'
+	-$(ECHO) 'Building target: $@'
 	$(CPP) $(LINKOBJ) -o "$@" $(LDFLAGS)
-	@echo 'Finished building target: $@'
-	@echo ' '
+	-$(ECHO) 'Finished building target: $@'
+	-$(ECHO) ' '
 
-obj/%.o: src/%.cpp
-	@echo 'Building file: $<'
+obj/%.o: src/%.cpp $(GENSRC)
+	-$(ECHO) 'Building file: $<'
 	$(CPP) $(CXXFLAGS) -o"$@" "$<"
-	@echo 'Finished building: $<'
-	@echo ' '
+	-$(ECHO) 'Finished building: $<'
+	-$(ECHO) ' '
 
-obj/%.o: src/%.c
-	@echo 'Building file: $<'
+obj/%.o: src/%.c $(GENSRC)
+	-$(ECHO) 'Building file: $<'
 	$(CC) $(CFLAGS) -o"$@" "$<"
-	@echo 'Finished building: $<'
-	@echo ' '
+	-$(ECHO) 'Finished building: $<'
+	-$(ECHO) ' '
 
-obj/%.res: res/%.rc
-	@echo 'Building resource: $<'
+obj/%.res: res/%.rc $(GENSRC)
+	-$(ECHO) 'Building resource: $<'
 	$(WINDRES) -i "$<" --input-format=rc -o "$@" -O coff 
-	@echo 'Finished building: $<'
-	@echo ' '
+	-$(ECHO) 'Finished building: $<'
+	-$(ECHO) ' '
+
+obj/ver_defs.h: version.mk Makefile
+	$(ECHO) \#define VER_MAJOR   $(VER_MAJOR) > "$(@D)/tmp"
+	$(ECHO) \#define VER_MINOR   $(VER_MINOR) >> "$(@D)/tmp"
+	$(ECHO) \#define VER_RELEASE $(VER_RELEASE) >> "$(@D)/tmp"
+	$(ECHO) \#define VER_BUILD   $(VER_BUILD) >> "$(@D)/tmp"
+	$(ECHO) \#define VER_STRING  \"$(VER_STRING)\" >> "$(@D)/tmp"
+	$(ECHO) \#define PACKAGE_SUFFIX  \"$(PACKAGE_SUFFIX)\" >> "$(@D)/tmp"
+	$(MV) "$(@D)/tmp" "$@"
+
+package: pkg-before $(PKGFMT)
+
+pkg-before:
+	-${RM} pkg/*
+	$(MKDIR) pkg
+	$(CP) bin/* pkg/
+	$(CP) docs/*_readme.txt pkg/
+
+pkg/%.tar.gz: pkg-before
+	-$(ECHO) 'Creating package: $<'
+	cd $(@D); \
+	$(TAR) --owner=0 --group=0 --exclude=*.tar.gz --exclude=*.zip -zcf "$(@F)" .
+	-$(ECHO) 'Finished creating: $<'
+	-$(ECHO) ' '
+
+tar.gz: pkg/pngpal2raw-$(subst .,_,$(VER_STRING))-$(PACKAGE_SUFFIX)-$(PKGOS).tar.gz
+
+pkg/%.zip: pkg-before
+	-$(ECHO) 'Creating package: $<'
+	cd $(@D); \
+	$(ZIP) -x*.tar.gz -x*.zip -9 -r "$(@F)" .
+	-$(ECHO) 'Finished creating: $<'
+	-$(ECHO) ' '
+
+zip: pkg/pngpal2raw-$(subst .,_,$(VER_STRING))-$(PACKAGE_SUFFIX)-$(PKGOS).zip
+
 #******************************************************************************
