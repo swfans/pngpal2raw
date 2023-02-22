@@ -2,16 +2,7 @@
 
 #include <string>
 #include <vector>
-
-#if __GNUC__ > 2
-#include <ext/hash_map>
-#else
-#include <hash_map>
-#endif
-namespace __gnu_cxx{};
-using namespace __gnu_cxx;
-//#include <unordered_map>
-
+#include <unordered_map>
 #include <png.h>
 
 // Needs to be greater than max(sizeof(struct JontySpriteV1),sizeof(struct JontySpriteV2))
@@ -56,7 +47,7 @@ public:
 typedef RGBValues<long> RGBAccum;
 typedef Vector2d<bool> ColorTranparency;
 typedef RGBValues<unsigned char> RGBColor;
-typedef hash_map<RGBAQuad,signed int> MapQuadToPal;
+typedef std::unordered_map<RGBAQuad,signed int> MapQuadToPal;
 typedef std::vector<RGBColor> ColorPalette;
 typedef Vector2d<float> DitherError;
 
