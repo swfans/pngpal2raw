@@ -417,7 +417,7 @@ int hspr_pack(png_bytep out_row, const png_bytep inp_row, const ColorTranparency
  */
 struct SmallSpriteV1 {
     /** Offset of the sprite data in DAT file. */
-    size_t Data;
+    uint32_t Data;
     /** Width of the sprite data. */
     unsigned char SWidth;
     /** Height of the sprite data. */
@@ -429,7 +429,7 @@ struct SmallSpriteV1 {
  */
 struct JontySpriteV1 {
     /** Offset of the sprite data in DAT file. */
-    size_t Data;
+    uint32_t Data;
     /** Width of the sprite data. */
     unsigned char SWidth;
     /** Height of the sprite data. */
@@ -457,7 +457,7 @@ struct JontySpriteV1 {
  */
 struct SmallSpriteV2 {
     /** Offset of the sprite data in DAT file. */
-    size_t Data;
+    uint32_t Data;
     /** Width of the sprite data. */
     unsigned short SWidth;
     /** Height of the sprite data. */
@@ -469,7 +469,7 @@ struct SmallSpriteV2 {
  */
 struct JontySpriteV2 {
     /** Offset of the sprite data in DAT file. */
-    size_t Data;
+    uint32_t Data;
     /** Width of the sprite data. */
     unsigned short SWidth;
     /** Height of the sprite data. */
