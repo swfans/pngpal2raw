@@ -34,7 +34,7 @@
 #include "ci_string.h"
 #include "prog_options.h"
 #include "imagedata.h"
-#include "pngpal2raw_version.h"
+#include "pngpal2raw_ver.h"
 
 using namespace std;
 
