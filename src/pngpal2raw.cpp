@@ -44,15 +44,15 @@ class WorkingSet
 {
 public:
     WorkingSet():alg(DfsAlg_FldStnbrg),lvl(0),requested_colors(0),requested_col_bits(0){}
-    void requestedColors(int reqColors)
+    void requestedColors(unsigned reqColors)
     {
         requested_colors = reqColors;
-        for (requested_col_bits=1; (1<<requested_col_bits) < requested_colors; requested_col_bits++);
+        for (requested_col_bits=1; (1u<<requested_col_bits) < requested_colors; requested_col_bits++);
         paletteRemap.resize(requested_colors);
-        for (int i=0; i < requested_colors; i++)
+        for (unsigned i = 0; i < requested_colors; i++)
             paletteRemap[i] = i;
     }
-    int requestedColors(void) const
+    unsigned requestedColors(void) const
     { return requested_colors; }
     void ditherLevel(int level)
     {
@@ -71,7 +71,7 @@ public:
             }
         }
     }
-    int requestedColorBPP(void) const
+    unsigned requestedColorBPP(void) const
     { return requested_col_bits; }
     void addPaletteQuad(RGBAQuad quad)
     {
@@ -90,8 +90,8 @@ public:
     int alg;
     int lvl;
 private:
-    int requested_colors;
-    int requested_col_bits;
+    unsigned requested_colors;
+    unsigned requested_col_bits;
 };
 
 /* to avoid indices below 0 in dithering error array */
@@ -297,17 +297,17 @@ short convert_rgb_to_indexed(WorkingSet& ws, ImageData& img, bool hasAlpha)
 
     //second pass: convert RGB to palette entries
     //for (int y=img.height-1; y>=0; --y)
-    for (int y=0; y<img.crop_height; y++)
+    for (int y = 0; y < img.crop_height; y++)
     {
         png_bytep row = row_pointers[y];
         png_bytep pixel = row_pointers[img.crop_y+y] + img.crop_x*bytesPerPixel;
         ColorTranparency::Column& transPtr = img.transMap[y];
 
-        for (unsigned x=0; x<img.crop_width; ++x)
+        for (int x = 0; x < img.crop_width; x++)
         {
-            bool trans=((*checkTrans)(pixel,img));
-            unsigned int quad=pixel[0]+(pixel[1]<<8)+(pixel[2]<<16);
-            if (!trans) quad+=(255<<24); //NOTE: alpha channel has already been set to 255 for non-transparent pixels, so this is correct even for images with alpha channel
+            bool trans = (*checkTrans)(pixel,img);
+            unsigned int quad = pixel[0] + (pixel[1]<<8) + (pixel[2]<<16);
+            if (!trans) quad += (255<<24); //NOTE: alpha channel has already been set to 255 for non-transparent pixels, so this is correct even for images with alpha channel
 
             transPtr[x] = trans;
 
@@ -660,18 +660,18 @@ int count_img_unused_lines_top(ImageData& img, ProgramOptions& opts, bool hasAlp
 
     png_bytep* row_pointers=png_get_rows(img.png_ptr, img.info_ptr);
 
-    for (int y=0; y<img.height; y++)
+    for (unsigned y = 0; y < img.height; y++)
     {
-        png_bytep row=row_pointers[y];
-        png_bytep pixel=row;
+        png_bytep row = row_pointers[y];
+        png_bytep pixel = row;
 
-        for (int x=0; x<img.width; x++)
+        for (unsigned x = 0; x < img.width; x++)
         {
-            bool trans=((*checkTrans)(pixel,img));
+            bool trans = (*checkTrans)(pixel,img);
             if (!trans) {
                 return y;
             }
-            pixel+=bytesPerPixel;
+            pixel += bytesPerPixel;
         }
     }
     // If all transparent, return top half of the size
@@ -689,18 +689,18 @@ int count_img_unused_lines_bottom(ImageData& img, ProgramOptions& opts, bool has
 
     png_bytep* row_pointers=png_get_rows(img.png_ptr, img.info_ptr);
 
-    for (int y=img.height-1; y>=0; y--)
+    for (int y = img.height - 1; y >= 0; y--)
     {
         png_bytep row=row_pointers[y];
         png_bytep pixel=row;
 
-        for (int x=0; x<img.width; x++)
+        for (unsigned x = 0; x < img.width; x++)
         {
-            bool trans=((*checkTrans)(pixel,img));
+            bool trans = (*checkTrans)(pixel,img);
             if (!trans) {
-                return img.height-1-y;
+                return img.height - 1 - y;
             }
-            pixel+=bytesPerPixel;
+            pixel += bytesPerPixel;
         }
     }
     // If all transparent, return bottom half of the size
@@ -718,20 +718,20 @@ int count_img_unused_lines_left(ImageData& img, ProgramOptions& opts, bool hasAl
 
     png_bytep* row_pointers=png_get_rows(img.png_ptr, img.info_ptr);
 
-    for (int x=0; x<img.width; x++)
+    for (unsigned x = 0; x < img.width; x++)
     {
-        for (int y=0; y<img.height; y++)
+        for (unsigned y = 0; y < img.height; y++)
         {
-            png_bytep row=row_pointers[y];
-            png_bytep pixel=row + x*bytesPerPixel;
-            bool trans=((*checkTrans)(pixel,img));
+            png_bytep row = row_pointers[y];
+            png_bytep pixel = row + x*bytesPerPixel;
+            bool trans = (*checkTrans)(pixel,img);
             if (!trans) {
                 return x;
             }
         }
     }
     // If all transparent, return left half of the size
-    return img.width/2;
+    return img.width / 2;
 }
 
 int count_img_unused_lines_right(ImageData& img, ProgramOptions& opts, bool hasAlpha)
@@ -745,15 +745,15 @@ int count_img_unused_lines_right(ImageData& img, ProgramOptions& opts, bool hasA
 
     png_bytep* row_pointers=png_get_rows(img.png_ptr, img.info_ptr);
 
-    for (int x=img.width-1; x>=0; x--)
+    for (unsigned x = img.width - 1; x >= 0; x--)
     {
-        for (int y=0; y<img.height; y++)
+        for (unsigned y = 0; y < img.height; y++)
         {
-            png_bytep row=row_pointers[y];
-            png_bytep pixel=row + x*bytesPerPixel;
-            bool trans=((*checkTrans)(pixel,img));
+            png_bytep row = row_pointers[y];
+            png_bytep pixel = row + x*bytesPerPixel;
+            bool trans = (*checkTrans)(pixel,img);
             if (!trans) {
-                return img.width-1-x;
+                return img.width - 1 - x;
             }
         }
     }
@@ -766,25 +766,25 @@ short load_inp_additional_data(ImageData& img, const ImageArea& inp, ProgramOpti
     struct JontySpriteV1 *jtab1;
     struct JontySpriteV2 *jtab2;
     int ntop,nbottom,nright,nleft;
-    if ((inp.x > 0) && (inp.x < img.width)) {
+    if ((inp.x > 0) && (inp.x < (int)img.width)) {
         img.crop_x = inp.x;
     } else {
         img.crop_x = 0;
     }
-    if ((inp.y > 0) && (inp.y < img.height)) {
+    if ((inp.y > 0) && (inp.y < (int)img.height)) {
         img.crop_y = inp.y;
     } else {
         img.crop_y = 0;
     }
-    if ((inp.w > 0) && (img.crop_x+inp.w < img.width)) {
+    if ((inp.w > 0) && (img.crop_x + inp.w < (int)img.width)) {
         img.crop_width = inp.w;
     } else {
-        img.crop_width = img.width-img.crop_x;
+        img.crop_width = img.width - img.crop_x;
     }
-    if ((inp.h > 0) && (img.crop_y+inp.h < img.height)) {
+    if ((inp.h > 0) && (img.crop_y + inp.h < (int)img.height)) {
         img.crop_height = inp.h;
     } else {
-        img.crop_height = img.height-img.crop_y;
+        img.crop_height = img.height - img.crop_y;
     }
     switch (opts.fmt)
     {
@@ -1015,7 +1015,7 @@ int load_command_line_options(ProgramOptions &opts, int argc, char *argv[])
 
 short show_head(void)
 {
-    printf("\n%s (%s) %s\n",PROGRAM_FULL_NAME,PROGRAM_NAME,VER_STRING);
+    printf("\n%s (%s) %s\n",PROGRAM_FULL_NAME,PROGRAM_NAME,FILE_VERSION);
     printf("  Created by %s; %s\n",PROGRAM_AUTHORS,LEGAL_COPYRIGHT);
     printf("----------------------------------------\n");
     return ERR_OK;
@@ -1099,9 +1099,9 @@ short save_raw_file(WorkingSet& ws, std::vector<ImageData>& imgs, const std::str
             tile_width = opts.inp[0].fd[2];
             tile_height = opts.inp[0].fd[3];
         }
-        for (int i = 0; i < imgs.size(); i+=tile_num_x)
+        for (int i = 0; i < (int)imgs.size(); i += tile_num_x)
         {
-            if (i+tile_num_x-1 >= imgs.size()) {
+            if (i + tile_num_x - 1 >= (int)imgs.size()) {
                 LogErr("Amount of images does not allow to completely fill whole line of RAW file");
                 break;
             }
@@ -1133,13 +1133,14 @@ short save_raw_file(WorkingSet& ws, std::vector<ImageData>& imgs, const std::str
     {
         ImageData & img = imgs[0];
         png_bytep * row_pointers = png_get_rows(img.png_ptr, img.info_ptr);
-        for (int y=0; y<img.height; y++)
+        for (unsigned y = 0; y < img.height; y++)
         {
             png_bytep row = row_pointers[y];
             int newLength = raw_pack(row,img.width,img.colorBPP());
-            if (fwrite(row,newLength,1,rawfile) != 1)
+            if (fwrite(row, newLength, 1, rawfile) != 1)
             { perror(fname_out.c_str()); return ERR_FILE_WRITE; }
-            for(int i=0; i<xorMaskLineLen(img)-newLength; ++i) writeByte(rawfile,0);
+            for (int i = 0; i < xorMaskLineLen(img) - newLength; i++)
+                writeByte(rawfile,0);
         }
     }
     fclose(rawfile);
@@ -1166,7 +1167,7 @@ short save_bmp_file(WorkingSet& ws, std::vector<ImageData>& imgs, const std::str
     }
     // Write palette
     {
-        int i;
+        unsigned i;
         for (i = 0; i < ws.palette.size(); i++)
         {
             unsigned int cval;
@@ -1199,11 +1200,11 @@ short save_bmp_file(WorkingSet& ws, std::vector<ImageData>& imgs, const std::str
             tile_width = opts.inp[0].fd[2];
             tile_height = opts.inp[0].fd[3];
         }
-        full_width = tile_num_x*tile_width;
-        full_height = (imgs.size()/tile_num_x)*tile_height;
-        for (int i = 0; i < imgs.size(); i+=tile_num_x)
+        full_width = tile_num_x * tile_width;
+        full_height = (imgs.size() / tile_num_x) * tile_height;
+        for (int i = 0; i < (int)imgs.size(); i += tile_num_x)
         {
-            if (i+tile_num_x-1 >= imgs.size()) {
+            if (i + tile_num_x - 1 >= (int)imgs.size()) {
                 LogErr("Amount of images does not allow to completely fill whole line of RAW file");
                 break;
             }
@@ -1212,13 +1213,13 @@ short save_bmp_file(WorkingSet& ws, std::vector<ImageData>& imgs, const std::str
             // For every row of tile images, get all row pointers
             for (int k = 0; k < tile_num_x; k++)
             {
-                ImageData &img = imgs[i+k];
+                ImageData &img = imgs[i + k];
                 row_pointers[k] = png_get_rows(img.png_ptr, img.info_ptr);
             }
             // Now, write output lines which merge the tiles
             std::vector<png_byte> out_row;
-            out_row.resize(tile_num_x*tile_width);
-            for (int y=0; y<tile_height; y++)
+            out_row.resize(tile_num_x * tile_width);
+            for (int y = 0; y < tile_height; y++)
             {
                 for (int k = 0; k < tile_num_x; k++)
                 {
@@ -1237,7 +1238,7 @@ short save_bmp_file(WorkingSet& ws, std::vector<ImageData>& imgs, const std::str
         png_bytep * row_pointers = png_get_rows(img.png_ptr, img.info_ptr);
         full_width = img.width;
         full_height = img.height;
-        for (int y=0; y<img.height; y++)
+        for (unsigned y = 0; y < img.height; y++)
         {
             png_bytep row = row_pointers[y];
             int newLength = raw_pack(row,img.width,img.colorBPP());
@@ -1282,7 +1283,7 @@ short save_hugspr_file(WorkingSet& ws, ImageData& img, const std::string& fname_
         long base_pos = ftell(rawfile);
         png_bytep out_row = new png_byte[img.width*3];
         png_bytep * row_pointers = png_get_rows(img.png_ptr, img.info_ptr);
-        for (int y=0; y<img.height; y++)
+        for (unsigned y = 0; y < img.height; y++)
         {
             row_shifts[y] = ftell(rawfile) - base_pos;
             png_bytep inp_row = row_pointers[y];
@@ -1324,7 +1325,7 @@ short save_smallspr_v1_file(WorkingSet& ws, std::vector<ImageData>& imgs, const 
             if (fwrite(&spr_count,sizeof(spr_count),1,rawfile) != 1)
             { perror(fname_out.c_str()); return ERR_FILE_WRITE; }
         }
-        for (int i = 0; i < imgs.size(); i++)
+        for (unsigned i = 0; i < imgs.size(); i++)
         {
             ImageData &img = imgs[i];
             spr_shifts[i+1].Data = ftell(rawfile) - base_pos;
@@ -1389,7 +1390,7 @@ short save_smallspr_v2_file(WorkingSet& ws, std::vector<ImageData>& imgs, const 
             if (fwrite(&spr_count,sizeof(spr_count),1,rawfile) != 1)
             { perror(fname_out.c_str()); return ERR_FILE_WRITE; }
         }
-        for (int i = 0; i < imgs.size(); i++)
+        for (unsigned i = 0; i < imgs.size(); i++)
         {
             ImageData &img = imgs[i];
             spr_shifts[i+1].Data = ftell(rawfile) - base_pos;
@@ -1443,7 +1444,7 @@ short save_jontyspr_v1_file(WorkingSet& ws, std::vector<ImageData>& imgs, const 
         // Shifts start with index 0, and there's additional entry at end
         spr_shifts.resize(imgs.size()+1);
         long base_pos = ftell(rawfile);
-        for (int i = 0; i < imgs.size(); i++)
+        for (unsigned i = 0; i < imgs.size(); i++)
         {
             ImageData &img = imgs[i];
             JontySpriteV1 &spr = spr_shifts[i];
@@ -1505,7 +1506,7 @@ short save_jontyspr_v2_file(WorkingSet& ws, std::vector<ImageData>& imgs, const 
         // Shifts start with index 0, and there's additional entry at end
         spr_shifts.resize(imgs.size()+1);
         long base_pos = ftell(rawfile);
-        for (int i = 0; i < imgs.size(); i++)
+        for (unsigned i = 0; i < imgs.size(); i++)
         {
             ImageData &img = imgs[i];
             JontySpriteV2 &spr = spr_shifts[i];
@@ -1572,7 +1573,7 @@ int main(int argc, char* argv[])
     std::vector<ImageData> imgs;
     imgs.resize(opts.inp.size());
     {
-        for (int i = 0; i < opts.inp.size(); i++)
+        for (unsigned i = 0; i < opts.inp.size(); i++)
         {
             if (verbose)
                 LogMsg("Loading image \"%s\".",opts.inp[i].fname.c_str());
