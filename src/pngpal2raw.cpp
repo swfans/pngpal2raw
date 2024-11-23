@@ -23,7 +23,7 @@
 #include <vector>
 #include <climits>
 #include <getopt.h>
-
+#include <cstdint>
 #include <cstring>
 #include <cmath>
 #include <fstream>

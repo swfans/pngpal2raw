@@ -64,6 +64,9 @@ AM_CONDITIONAL([TARGET_WINDOWS], [test "$have_windows" = "yes"])
 # On Windows, we can optionally include resources in the executable.
 AM_CONDITIONAL([HAS_WINDRES], [test -n "${WINDRES}" -a "$have_windows" = "yes"])
 
+# Checks for header files.
+AC_CHECK_HEADERS([stdint.h])
+
 # Checks for libraries.
 
 PKG_CHECK_MODULES([PNG], [libpng], [], [
