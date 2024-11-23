@@ -58,7 +58,8 @@ jobs:
             libpng-dev:i386
 
           apt install -y \
-            build-essential autoconf libtool make
+            build-essential autoconf libtool make \
+            pkg-config:i386
 
       - name: Autoreconf
         run: autoreconf -ivf
