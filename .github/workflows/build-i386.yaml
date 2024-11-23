@@ -123,6 +123,7 @@ jobs:
               unzip
               mingw-w64-i686-toolchain
               mingw-w64-i686-autotools
+              mingw-w64-i686-pkg-config
               mingw-w64-i686-libpng
 
       - name: Autoreconf
