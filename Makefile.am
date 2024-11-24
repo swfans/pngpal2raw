@@ -22,7 +22,7 @@ if HAS_WINDRES
 	$(WINDRES) $(pngpal2raw_RCFLAGS) -i $< -J rc -o $@ -O coff
 endif
 
-#doc_DATA = AUTHORS
+doc_DATA = README.md
 docdir = $(prefix)/$(PACKAGE)
 
 EXTRA_DIST = GPL3 doc res
