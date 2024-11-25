@@ -31,9 +31,9 @@
 
 #include <png.h>
 
-#include "ci_string.h"
-#include "prog_options.h"
-#include "imagedata.h"
+#include "ci_string.hpp"
+#include "prog_options.hpp"
+#include "imagedata.hpp"
 #include "pngpal2raw_ver.h"
 
 using namespace std;

@@ -19,7 +19,7 @@
 /******************************************************************************/
 
 #include <windows.h> // include for version info constants
-#include "../src/pngpal2raw_version.h" // define values for version info
+#include "../src/pngpal2raw_ver.h" // define values for version info
 
 A ICON MOVEABLE PURE LOADONCALL DISCARDABLE "pngpal2raw.ico"
 

@@ -19,8 +19,8 @@
  */
 /******************************************************************************/
 
-#include "imagedata.h"
-#include "prog_options.h"
+#include "imagedata.hpp"
+#include "prog_options.hpp"
 
 #include <png.h>
 

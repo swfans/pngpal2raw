@@ -3,12 +3,12 @@ bin_PROGRAMS = pngpal2raw
 bindir = $(prefix)/$(PACKAGE)
 
 pngpal2raw_SOURCES = \
-	src/ci_string.h \
+	src/ci_string.hpp \
 	src/imagedata.cpp \
-	src/imagedata.h \
+	src/imagedata.hpp \
 	src/pngpal2raw.cpp \
 	src/pngpal2raw_ver.h \
-	src/prog_options.h \
+	src/prog_options.hpp \
 	config.h
 
 if HAS_WINDRES

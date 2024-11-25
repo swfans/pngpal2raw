@@ -29,7 +29,7 @@
 
 /* Program name, copyrights and file names */
 #define PROGRAM_NAME      "PngPal2raw"
-#define PROGRAM_FULL_NAME "PNG and PAL to RAW files converter"
+#define PROGRAM_FULL_NAME PACKAGE_NAME
 #define PROGRAM_AUTHORS   "Mefistotelis"
 #define COMPANY_NAME      "Community based"
 #define INTERNAL_NAME     "pngpal2raw"
