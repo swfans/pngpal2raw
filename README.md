@@ -33,7 +33,7 @@ Once you've made sure you have the above, proceed with the following steps:
 3. do `./configure` to make the build scripts find required toolchain and libraries
 4. do `make` to compile the executable file
 
-You should now have a working `src/pngpal2raw` executable file.
+You should now have a working `pngpal2raw` executable file.
 
 #### Build example - Ubuntu 22.04
 
@@ -65,7 +65,7 @@ make V=1
 The `V=1` variable makes `make` print each command it executes, which makes
 diagnosing issues easier.
 
-On success, you will hasve the executable.
+On success, you will have the executable.
 
 Finally, you can copy the files to some installation folder, ie. `pkg`:
 
