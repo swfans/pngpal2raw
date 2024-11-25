@@ -7,7 +7,7 @@ pngpal2raw_SOURCES = \
 	src/imagedata.cpp \
 	src/imagedata.h \
 	src/pngpal2raw.cpp \
-	src/pngpal2raw_version.h \
+	src/pngpal2raw_ver.h \
 	src/prog_options.h \
 	config.h
 
