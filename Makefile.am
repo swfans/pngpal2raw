@@ -44,3 +44,7 @@ install-exec-hook:
 	$(eval lib_SHARED_INSTALL := $(sort $(lib_SHARED_INSTALL)))
 	cp $(lib_SHARED_INSTALL) $(DESTDIR)${prefix}/$(PACKAGE)
 endif
+
+install-data-hook:
+	cd "$(DESTDIR)${prefix}/$(PACKAGE)"; \
+	mv README.md pngpal2raw_readme.md
