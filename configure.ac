@@ -4,7 +4,7 @@ AC_PREREQ([2.69])
 
 m4_define([ver_major], [1])
 m4_define([ver_minor], [0])
-m4_define([ver_release], [2])
+m4_define([ver_release], [3])
 # Set build number to commit count only if ".git" folder is present
 m4_define([ver_build], m4_if(m4_esyscmd_s([ls -1 -d ".git" 2>&1]),.git,[m4_esyscmd_s([git rev-list --count HEAD])],[0]))
 
@@ -73,16 +73,24 @@ PKG_CHECK_MODULES([PNG], [libpng], [], [
   AC_MSG_ERROR([libpng not found])
 ])
 
+AC_SUBST(BFLIBRARY_LIBS, "")
+AC_SUBST(BFLIBRARY_CFLAGS, "-I\"\$(top_srcdir)/bflibrary/include\"")
+
 # Flags
 
 CFLAGS="$CFLAGS -Wall -Wextra -Wno-unused-parameter"
 CFLAGS="$CFLAGS -include \"\$(top_builddir)/src/config.h\""
+CXXFLAGS="$CXXFLAGS -include \"\$(top_builddir)/src/config.h\""
 
 # Add configuration of libraries to flags; the order of libraries is important
 
 CFLAGS="$CFLAGS $PNG_CFLAGS"
+CXXFLAGS="$CXXFLAGS $PNG_CFLAGS"
 LIBS="$LIBS $PNG_LIBS"
 
+CFLAGS="$CFLAGS $BFLIBRARY_CFLAGS"
+CXXFLAGS="$CXXFLAGS $BFLIBRARY_CFLAGS"
+LIBS="$LIBS $BFLIBRARY_LIBS"
 
 AC_SUBST([WINDRES])
 

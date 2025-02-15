@@ -3,6 +3,13 @@ bin_PROGRAMS = pngpal2raw
 bindir = $(prefix)/$(PACKAGE)
 
 pngpal2raw_SOURCES = \
+	bflibrary/src/gflicply.c \
+	bflibrary/src/gflicrec.c \
+	bflibrary/include/bffile.h \
+	bflibrary/include/bfflic.h \
+	bflibrary/include/bfmemut.h \
+	bflibrary/include/bftypes.h \
+	bflibrary/include/privbflog.h \
 	src/ci_string.hpp \
 	src/imagedata.cpp \
 	src/imagedata.hpp \

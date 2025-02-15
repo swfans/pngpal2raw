@@ -31,6 +31,7 @@ enum {
     OutFmt_JSPR,   //!< Bullfrog Jonty Sprite format, sprite catalogue like SSPR but with additional properties for each sprite
     OutFmt_SSPR2,  //!< KeeperFX variation (version 2) of Small Sprite format, with 16-bit sprite dimensions
     OutFmt_JSPR2,  //!< KeeperFX variation (version 2) of Jonty Sprite format, with 16-bit sprite dimensions
+    OutFmt_FLIC,   //!< Bullfrog FLIC format, animation originally from Autodesk, with modifications to headers and chunk types
 };
 
 enum {

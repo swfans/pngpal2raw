@@ -21,6 +21,7 @@
 
 #include <cstdio>
 #include <vector>
+#include <algorithm>
 #include <climits>
 #include <getopt.h>
 #include <cstdint>
@@ -28,12 +29,12 @@
 #include <cmath>
 #include <fstream>
 #include <sstream>
-
 #include <png.h>
 
 #include "ci_string.hpp"
 #include "prog_options.hpp"
 #include "imagedata.hpp"
+#include "bfflic.h"
 #include "pngpal2raw_ver.h"
 
 using namespace std;
@@ -315,6 +316,7 @@ short convert_rgb_to_indexed(WorkingSet& ws, ImageData& img, bool hasAlpha)
             row[x] = palentry;
             pixel += bytesPerPixel;
         }
+//!!!!LogMsg("QQ %d", (int)std::count(transPtr.begin(), transPtr.end(), false));
     }
 
     img.col_bits = ws.requestedColorBPP();
@@ -350,29 +352,29 @@ inline void write_int32_le_file (FILE *fp, unsigned long x)
  */
 int raw_pack(png_bytep row,int width,int nbits)
 {
-    int pixelsPerByte=8/nbits;
-    if (pixelsPerByte<=1) return width;
-    int ander=(1<<nbits)-1;
-    int outByte=0;
-    int count=0;
-    int outIndex=0;
-    for (int i=0; i<width; ++i)
+    int pixelsPerByte = 8 / nbits;
+    if (pixelsPerByte <= 1) return width;
+    int ander = (1 << nbits) - 1;
+    int outByte = 0;
+    int count = 0;
+    int outIndex = 0;
+    for (int i = 0; i < width; ++i)
     {
-        outByte+=(row[i]&ander);
-        if (++count==pixelsPerByte)
+        outByte += (row[i] & ander);
+        if (++count == pixelsPerByte)
         {
-            row[outIndex]=outByte;
-            count=0;
+            row[outIndex] = outByte;
+            count = 0;
             ++outIndex;
-            outByte=0;
+            outByte = 0;
         }
-        outByte<<=nbits;
+        outByte <<= nbits;
     }
 
-    if (count>0)
+    if (count > 0)
     {
-        outByte<<=nbits*(pixelsPerByte-count);
-        row[outIndex]=outByte;
+        outByte <<= nbits * (pixelsPerByte - count);
+        row[outIndex] = outByte;
         ++outIndex;
     }
 
@@ -889,6 +891,8 @@ int load_command_line_options(ProgramOptions &opts, int argc, char *argv[])
                 opts.fmt = OutFmt_SSPR2;
             else if (ci_string(optarg).compare("JSPR2") == 0)
                 opts.fmt = OutFmt_JSPR2;
+            else if (ci_string(optarg).compare("FLIC") == 0)
+                opts.fmt = OutFmt_FLIC;
             else if (ci_string(optarg).compare("RAW") == 0)
                 opts.fmt = OutFmt_RAW;
             else if (ci_string(optarg).compare("BMP") == 0)
@@ -973,7 +977,8 @@ int load_command_line_options(ProgramOptions &opts, int argc, char *argv[])
         LogErr("Incorrectly specified input file name.");
         return false;
     }
-    if ((opts.fmt != OutFmt_SSPR) && (opts.fmt != OutFmt_JSPR) && (opts.fmt != OutFmt_SSPR2) && (opts.fmt != OutFmt_JSPR2) &&
+    if ((opts.fmt != OutFmt_SSPR) && (opts.fmt != OutFmt_JSPR) &&
+        (opts.fmt != OutFmt_SSPR2) && (opts.fmt != OutFmt_JSPR2) && (opts.fmt != OutFmt_FLIC) &&
         (opts.fmt != OutFmt_RAW)  && (opts.fmt != OutFmt_BMP) && (opts.inp.size() != 1))
     {
         LogErr("This format supports only one input file name.");
@@ -992,6 +997,9 @@ int load_command_line_options(ProgramOptions &opts, int argc, char *argv[])
         case OutFmt_JSPR:
         case OutFmt_JSPR2:
             opts.fname_out = file_name_change_extension(file_name_strip_path(opts.inp[0].fname),"jty");
+            break;
+        case OutFmt_FLIC:
+            opts.fname_out = file_name_change_extension(file_name_strip_path(opts.inp[0].fname),"fli");
             break;
         case OutFmt_BMP:
             opts.fname_out = file_name_change_extension(file_name_strip_path(opts.inp[0].fname),"bmp");
@@ -1031,7 +1039,7 @@ short show_usage(const std::string &fname)
     printf("    -v,--verbose             Verbose console output mode\n");
     printf("    -d<alg>,--diffuse<alg>   Diffusion algorithm used for bpp conversion\n");
     printf("    -l<num>,--dflevel<num>   Diffusion level, 1..100\n");
-    printf("    -f<fmt>,--format<fmt>    Output file format; RAW, HSPR, SSPR, JSPR, SSPR2, JSPR2\n");
+    printf("    -f<fmt>,--format<fmt>    Output file format; RAW, HSPR, SSPR, JSPR, SSPR2, JSPR2, FLIC\n");
     printf("    -p<file>,--palette<file> Input PAL file name\n");
     printf("    -r<num>,--range<num>     Color values range in input PAL file, 1..255\n");
     printf("    -o<file>,--output<file>  Output image file name\n");
@@ -1113,7 +1121,7 @@ short save_raw_file(WorkingSet& ws, std::vector<ImageData>& imgs, const std::str
                 ImageData &img = imgs[i+k];
                 row_pointers[k] = png_get_rows(img.png_ptr, img.info_ptr);
             }
-            // Now, write output lines wchich merge the tiles
+            // Now, write output lines which merge the tiles
             std::vector<png_byte> out_row;
             out_row.resize(tile_num_x*tile_width);
             for (int y=0; y<tile_height; y++)
@@ -1555,6 +1563,75 @@ short save_jontyspr_v2_file(WorkingSet& ws, std::vector<ImageData>& imgs, const 
     return ERR_OK;
 }
 
+short save_flic_file(WorkingSet& ws, std::vector<ImageData>& imgs, const std::string& fname_out, ProgramOptions& opts)
+{
+    struct Animation anim;
+    ubyte *frmbuf;
+    ubyte *scratch_buf;
+    uint w, h;
+    bool has_trans;
+
+    w = h = 0;
+    has_trans = false;
+    for (unsigned i = 0; i < imgs.size(); i++)
+    {
+        ImageData &img = imgs[i];
+        if (w < img.width)
+            w = img.width;
+        if (h < img.height)
+            h = img.height;
+        if (i == 0)
+        {
+            for (unsigned y = 0; y < img.height; y++)
+            {
+                ColorTranparency::Column& transPtr = img.transMap[y];
+                has_trans |= ((unsigned)std::count(transPtr.begin(), transPtr.end(), false) < transPtr.size());
+                if (has_trans) break;
+            }
+        }
+    }
+
+    anim_flic_init(&anim, 0, 0);
+    anim_flic_set_fname(&anim, "%s", fname_out.c_str());
+    anim_flic_make_open(&anim, w, h, 8, AniFlg_RECORD | (has_trans ? AniFlg_ALL_DELTA : 0));
+    if (!anim_is_opened(&anim)) {
+        perror(fname_out.c_str());
+        return ERR_CANT_OPEN;
+    }
+
+    scratch_buf = new ubyte[anim_frame_size(w, h, 8) + anim_buffer_size(w, h, 8)];
+    anim_scratch = scratch_buf;
+    frmbuf = new ubyte[anim_frame_size(w, h+1, 8)];
+    memset(frmbuf, 0, anim_frame_size(w, h+1, 8));
+    anim_flic_set_frame_buffer(&anim, frmbuf, 0, 0, w, 0);
+
+    for (unsigned i = 0; i < imgs.size(); i++)
+    {
+        ImageData &img = imgs[i];
+
+        png_bytep * row_pointers = png_get_rows(img.png_ptr, img.info_ptr);
+        for (unsigned y = 0; y < img.height; y++)
+        {
+            png_bytep row = row_pointers[y];
+            ColorTranparency::Column& transPtr = img.transMap[y];
+
+            for (unsigned x = 0; x < img.width; x++)
+            {
+                if (!transPtr[x]) {
+                    frmbuf[y * w + x] = row[x];
+                }
+            }
+        }
+
+        anim_make_prep_next_frame(&anim, frmbuf);
+        anim_make_next_frame(&anim, NULL);
+    }
+    anim_flic_close(&anim);
+    delete[] frmbuf;
+    delete[] scratch_buf;
+    return ERR_OK;
+}
+
 int main(int argc, char* argv[])
 {
     static ProgramOptions opts;
@@ -1652,6 +1729,12 @@ int main(int argc, char* argv[])
     case OutFmt_JSPR2:
         LogMsg("Saving JSPR2 file \"%s\".",opts.fname_out.c_str());
         if (save_jontyspr_v2_file(ws, imgs, opts.fname_out, opts.fname_tab, opts) != ERR_OK) {
+            return 8;
+        }
+        break;
+    case OutFmt_FLIC:
+        LogMsg("Saving FLIC file \"%s\".",opts.fname_out.c_str());
+        if (save_flic_file(ws, imgs, opts.fname_out, opts) != ERR_OK) {
             return 8;
         }
         break;
