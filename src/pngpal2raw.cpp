@@ -316,7 +316,7 @@ short convert_rgb_to_indexed(WorkingSet& ws, ImageData& img, bool hasAlpha)
             row[x] = palentry;
             pixel += bytesPerPixel;
         }
-//!!!!LogMsg("QQ %d", (int)std::count(transPtr.begin(), transPtr.end(), false));
+        LogDbg("Line %d non-transparent pixels %d", y, (int)std::count(transPtr.begin(), transPtr.end(), false));
     }
 
     img.col_bits = ws.requestedColorBPP();
@@ -350,17 +350,28 @@ inline void write_int32_le_file (FILE *fp, unsigned long x)
  * Packs a line of width pixels (1 byte per pixel) in row, with 8/nbits pixels packed into each byte.
  * @return the new number of bytes in row
  */
-int raw_pack(png_bytep row,int width,int nbits)
+int raw_pack(png_bytep row, const ColorTranparency::Column& inp_trans, int width, int nbits)
 {
     int pixelsPerByte = 8 / nbits;
-    if (pixelsPerByte <= 1) return width;
+    if (pixelsPerByte <= 1)
+    {
+        for (int i = 0; i < width; ++i)
+        {
+            if (inp_trans[i])
+                row[i] = 0; // transparent color is 0
+        }
+        return width;
+    }
     int ander = (1 << nbits) - 1;
     int outByte = 0;
     int count = 0;
     int outIndex = 0;
     for (int i = 0; i < width; ++i)
     {
-        outByte += (row[i] & ander);
+        if (!inp_trans[i])
+            outByte += (row[i] & ander);
+        else
+            outByte += (0 & ander); // transparent color is 0
         if (++count == pixelsPerByte)
         {
             row[outIndex] = outByte;
@@ -1130,7 +1141,8 @@ short save_raw_file(WorkingSet& ws, std::vector<ImageData>& imgs, const std::str
                 {
                     ImageData &img = imgs[i+k];
                     png_bytep inp_row = row_pointers[k][img.crop_y+y];
-                    int newLength = raw_pack(inp_row,img.crop_width,img.colorBPP());
+                    ColorTranparency::Column& inp_trans = img.transMap[img.crop_y+y];
+                    int newLength = raw_pack(inp_row, inp_trans, img.crop_width, img.colorBPP());
                     memcpy(&out_row.front()+k*tile_width,inp_row,newLength);
                 }
                 if (fwrite(&out_row.front(),out_row.size(),1,rawfile) != 1)
@@ -1144,7 +1156,8 @@ short save_raw_file(WorkingSet& ws, std::vector<ImageData>& imgs, const std::str
         for (unsigned y = 0; y < img.height; y++)
         {
             png_bytep row = row_pointers[y];
-            int newLength = raw_pack(row,img.width,img.colorBPP());
+            ColorTranparency::Column& inp_trans = img.transMap[y];
+            int newLength = raw_pack(row, inp_trans, img.width, img.colorBPP());
             if (fwrite(row, newLength, 1, rawfile) != 1)
             { perror(fname_out.c_str()); return ERR_FILE_WRITE; }
             for (int i = 0; i < xorMaskLineLen(img) - newLength; i++)
@@ -1233,7 +1246,8 @@ short save_bmp_file(WorkingSet& ws, std::vector<ImageData>& imgs, const std::str
                 {
                     ImageData &img = imgs[i+k];
                     png_bytep inp_row = row_pointers[k][img.crop_y+y];
-                    int newLength = raw_pack(inp_row,img.crop_width,img.colorBPP());
+                    ColorTranparency::Column& inp_trans = img.transMap[img.crop_y+y];
+                    int newLength = raw_pack(inp_row, inp_trans, img.crop_width, img.colorBPP());
                     memcpy(&out_row.front()+k*tile_width,inp_row,newLength);
                 }
                 if (fwrite(&out_row.front(),out_row.size(),1,bmpfile) != 1)
@@ -1249,7 +1263,8 @@ short save_bmp_file(WorkingSet& ws, std::vector<ImageData>& imgs, const std::str
         for (unsigned y = 0; y < img.height; y++)
         {
             png_bytep row = row_pointers[y];
-            int newLength = raw_pack(row,img.width,img.colorBPP());
+            ColorTranparency::Column& inp_trans = img.transMap[y];
+            int newLength = raw_pack(row, inp_trans, img.width, img.colorBPP());
             if (fwrite(row,newLength,1,bmpfile) != 1)
             { perror(fname_out.c_str()); return ERR_FILE_WRITE; }
             for(int i=0; i<xorMaskLineLen(img)-newLength; ++i) writeByte(bmpfile,0);
